@@ -108,6 +108,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     private boolean dirty = false;
 
+    // Server-side mirror of the vanilla tracker's seenBy set (maintained by start/stopSeenByPlayer)
+    private final Set<ServerPlayer> trackingPlayers = new HashSet<>();
+
     private float engineSpeed = 0;
     private float boostSpeed = 0;
     private float speedDirection = 0;
@@ -498,10 +501,23 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             if (ignoreDriver && p == getFirstPassenger()) {
                 continue;
             }
-            if (p.position().distanceTo(position()) < radius && p instanceof ServerPlayer player) {
+            // Players not tracking this entity don't know its ID, so the client handlers would drop the packet anyway
+            if (p.position().distanceTo(position()) < radius && p instanceof ServerPlayer player && this.trackingPlayers.contains(player)) {
                 action.accept(player);
             }
         }
+    }
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        this.trackingPlayers.add(player);
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        this.trackingPlayers.remove(player);
     }
 
     public Vec3 getTailPos() {
