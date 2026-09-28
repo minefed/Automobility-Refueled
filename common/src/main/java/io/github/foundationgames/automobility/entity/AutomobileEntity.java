@@ -893,7 +893,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         if (this.isControlledByLocalInstance()) {
             this.setDeltaMovement(cumulative);
         }
-        this.markHurt();
+        // A parked car's zero velocity reaches clients through the regular motion update when it stops,
+        // so only moving or occupied cars need the forced per-tick velocity packet.
+        if (!this.getPassengers().isEmpty() || this.getDeltaMovement().lengthSqr() != 0) {
+            this.markHurt();
+        }
         this.hasImpulse = true;
 
         lastVelocity = cumulative;
